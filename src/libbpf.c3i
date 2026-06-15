@@ -1,0 +1,726 @@
+module libbpf;
+import bpf;
+
+typedef BpfObject = void;
+typedef BpfLink = void;
+typedef Btf = void;
+typedef BpfProgram = void;
+typedef BpfInsn = void;
+typedef Bpf_Prog_Load_Opts = void;
+
+extern fn uint bpf_object__kversion(BpfObject* obj);
+extern fn uint libbpf_minor_version();
+extern fn uint libbpf_major_version();
+extern fn ZString libbpf_version_string();
+
+constdef Libbpf_Errno {
+    __LIBBPF_ERRNO__START = 4000,
+    LIBBPF_ERRNO__LIBELF  = __LIBBPF_ERRNO__START,
+    LIBBPF_ERROR__FORMAT,
+    LIBBPF_ERRNO__KVERSION,
+    LIBBPF_ERRNO__ENDIAN,
+    LIBBPF_ERRNO__INTERNAL,
+    LIBBPF_ERRNO__RELOC,
+    LIBBPF_ERRNO__LOAD,
+    LIBBPF_ERRNO__VERIFY,
+    LIBBPF_ERRNO__PROG2BIG,
+    LIBBPF_ERRNO__KVER,
+    LIBBPF_ERRNO__PROGTYPE,
+    LIBBPF_ERRNO__WRNGPID,
+    LIBBPF_ERRNO__INVSEQ,
+    LIBBPF_ERRNO__NLPARSE,
+    __LIBBPF_ERRNO__END,
+}
+
+extern fn int libbpf_strerror(int err, ZString buf, usz size);
+extern fn ZString libbpf_bpf_attach_type_str(Bpf_Attach_Type t);
+extern fn ZString libbpf_bpf_link_type_str(Bpf_Link_Type t);
+extern fn ZString libbpf_bpf_map_type_str(Bpf_Map_Type t);
+extern fn ZString libbpf_bpf_prog_type_str(Bpf_Prog_Type t);
+
+enum Libbpf_Print_Level {
+    LIBBPF_WARN,
+    LIBBPF_INFO,
+    LIBBPF_DEBUG,
+}
+
+// FIX: below
+alias Libbpf_Print_Fn_T = fn int(Libbpf_Print_Level level, ZString s,);
+extern fn Libbpf_Print_Fn_T libbpf_set_print(Libbpf_Print_Fn_T f);
+
+// FIX: below
+struct Bpf_Object_Open_Opts {
+    usz size;
+    ZString object_name;
+    bool relaxed_maps;
+    ZString pin_root_path;
+    ZString kconfig;
+    ZString btf_custom_path;
+    ZString kernel_log_buf;
+    usz kernel_log_size;
+    uint kernel_log_level;
+    ZString bpf_token_path;
+}
+
+extern fn BpfObject* bpf_object__open(ZString path);
+extern fn BpfObject* bpf_object__open_file(ZString path, Bpf_Object_Open_Opts opts);
+
+// NOTE: Check obj_buf
+extern fn BpfObject* bpf_object__open_mem(void* obj_buf, usz obj_buf_sz, Bpf_Object_Open_Opts opts);
+extern fn int bpf_object__prepare(BpfObject* obj);
+extern fn int bpf_object__load(BpfObject* obj);
+extern fn void bpf_object__close(BpfObject* obj);
+extern fn int bpf_object__pin_maps(BpfObject* obj, ZString* path);
+extern fn int bpf_object__unpin_maps(BpfObject* obj, ZString* path);
+extern fn int bpf_object__pin_programs(BpfObject* obj, ZString* path);
+extern fn int bpf_object__unpin_programs(BpfObject* obj, ZString* path);
+extern fn int bpf_object__pin(BpfObject* object, ZString* path);
+extern fn int bpf_object__unpin(BpfObject* object, ZString* path);
+
+extern fn ZString* bpf_object__name(BpfObject* obj);
+extern fn uint bpf_object__kversion(BpfObject* obj);
+extern fn int bpf_object__set_kversion(BpfObject* obj, uint kern_version);
+
+extern fn int bpf_object__token_fd(BpfObject* obj);
+extern fn Btf* bpf_object__btf(BpfObject* obj);
+extern fn int bpf_object__btf_fd(BpfObject* obj);
+
+extern fn BpfProgram* bpf_object__find_program_by_name(BpfObject* obj, ZString* name);
+extern fn int libbpf_prog_type_by_name(
+    ZString* name,
+    Bpf_Prog_Type* prog_type,
+    Bpf_Attach_Type* expected_attach_type
+);
+extern fn int libbpf_attach_type_by_name(ZString* name, Bpf_Attach_Type* attach_type);
+extern fn int libbpf_find_vmlinux_btf_id(ZString* name, Bpf_Attach_Type attach_type);
+
+extern fn BpfProgram* bpf_object__next_program(BpfObject* obj, BpfProgram* prog);
+extern fn BpfProgram* bpf_object__prev_program(BpfObject* obj, BpfProgram* prog);
+extern fn void bpf_program__set_ifindex(BpfProgram* prog, uint ifindex);
+
+extern fn ZString bpf_program__name(BpfProgram* prog);
+extern fn ZString bpf_program__section_name(BpfProgram* prog);
+extern fn bool bpf_program__autoload(BpfProgram* prog);
+extern fn int bpf_program__set_autoload(BpfProgram* prog, bool autoload);
+extern fn bool bpf_program__autoattach(BpfProgram* prog);
+extern fn void bpf_program__set_autoattach(BpfProgram* prog, bool autoattach);
+extern fn int bpf_program__set_insns(BpfProgram* prog, BpfInsn* new_insns, usz new_insn_cnt);
+
+extern fn usz bpf_program__insn_cnt(BpfProgram* prog);
+
+extern fn int bpf_program__fd(BpfProgram* prog);
+extern fn int bpf_program__pin(BpfProgram* prog, ZString* path);
+extern fn int bpf_program__unpin(BpfProgram* prog, ZString* path);
+extern fn void bpf_program__unload(BpfProgram* prog);
+
+
+extern fn BpfLink* bpf_link__open(ZString* path);
+extern fn int bpf_link__fd(BpfLink* link);
+extern fn ZString bpf_link__pin_path(BpfLink* link);
+extern fn int bpf_link__pin(BpfLink* link, ZString* path);
+extern fn int bpf_link__unpin(BpfLink* link);
+extern fn int bpf_link__update_program(BpfLink* link, BpfProgram* prog);
+extern fn void bpf_link__disconnect(BpfLink* link);
+extern fn int bpf_link__detach(BpfLink* link);
+extern fn int bpf_link__destroy(BpfLink* link);
+
+
+extern fn BpfLink* bpf_program__attach(BpfProgram* prog);
+
+// NOTE: Check below
+struct Bpf_Perf_Event_Opts {
+    usz size;
+    uint bpf_cookie;
+    bool force_ioctl_attach;
+    bool dont_enable;
+}
+
+
+extern fn BpfLink* bpf_program__attach_perf_event(BpfProgram* prog, int pfd);
+extern fn BpfLink* bpf_program__attach_perf_event_opts(
+    BpfProgram* prog,
+    int pfd,
+    Bpf_Perf_Event_Opts* opts
+);
+
+const PROBE_ATTACH_MODE_DEFAULT = 0;
+
+enum Probe_Attach_Mode {
+    PROBE_ATTACH_MODE_DEFAULT,
+    PROBE_ATTACH_MODE_LEGACY,
+    PROBE_ATTACH_MODE_PERF,
+    PROBE_ATTACH_MODE_LINK,
+}
+
+// NOTE: Check below
+struct Bpf_Kprobe_Opts {
+    usz size;
+    uint bpf_cookie;
+    usz offset;
+    bool retprobe;
+    Probe_Attach_Mode attach_mode;
+}
+
+extern fn BpfLink* bpf_program__attach_kprobe(BpfProgram* prog, bool retprobe, ZString* func_name);
+extern fn BpfLink* bpf_program__attach_kprobe_opts(
+    BpfProgram* prog,
+    ZString* func_name,
+    Bpf_Kprobe_Opts* opts
+);
+
+struct Bpf_Kprobe_Multi_Opts {
+    usz size;
+    ZString** syms;
+    ulong* addrs;
+    uint* cookies;
+    usz cnt;
+    bool retprobe;
+    bool session;
+    bool unique_match;
+}
+
+extern fn BpfLink* bpf_program__attach_kprobe_multi_opts(
+    BpfProgram* prog,
+    ZString* pattern,
+    Bpf_Kprobe_Opts* opts
+);
+
+struct Bpf_Uprobe_Multi_Opts {
+    usz size;
+    ZString** syms;
+    ulong* offsets;
+    ulong* ref_ctr_offsets;
+    uint* cookies;
+    usz cnt;
+    bool retprobe;
+    bool session;
+}
+
+// NOTE: Change pid
+extern fn BpfLink* bpf_program__attach_uprobe_multi(
+    BpfProgram* prog,
+    int pid,
+    ZString* binary_path,
+    ZString* func_pattern,
+    Bpf_Uprobe_Multi_Opts* opts
+);
+
+struct Bpf_Ksyscall_Opts {
+    usz size;
+    uint bpf_cookie;
+    bool retprobe;
+}
+
+extern fn BpfLink* bpf_program__attach_ksyscall(
+    BpfProgram* prog,
+    ZString* syscall_name,
+    Bpf_Ksyscall_Opts* opts
+);
+
+struct Bpf_Uprobe_Opts {
+    usz size;
+    usz ref_ctr_offset;
+    ulong bpf_cookie;
+    bool retprobe;
+    ZString* func_name;
+    Probe_Attach_Mode attach_mode;
+}
+
+// Program attachment 
+
+extern fn BpfLink* bpf_program__attach_uprobe(
+    BpfProgram* prog,
+    bool retprobe,
+    int pid,
+    ZString binary_path,
+    usz func_offset
+);
+extern fn BpfLink* bpf_program__attach_uprobe_opts(
+    BpfProgram* prog,
+    int pid,
+    ZString binary_path,
+    usz func_offset,
+    Bpf_Uprobe_Opts* opts
+);
+
+struct Bpf_Usdt_Opts {
+    usz size;
+    ulong usdt_cookie;
+}
+extern fn BpfLink* bpf_program__attach_usdt(
+    BpfProgram* prog,
+    int pid,
+    ZString binary_path,
+    ZString usdt_provider,
+    ZString usdt_name,
+    Bpf_Usdt_Opts* opts
+);
+
+struct Bpf_Tracepoint_Opts {
+    usz size;
+    ulong bpf_cookie;
+}
+extern fn BpfLink* bpf_program__attach_tracepoint(
+    BpfProgram* prog,
+    ZString tp_category,
+    ZString tp_name
+);
+extern fn BpfLink* bpf_program__attach_tracepoint_opts(
+    BpfProgram* prog,
+    ZString tp_category,
+    ZString tp_name,
+    Bpf_Tracepoint_Opts* opts
+);
+
+struct Bpf_Raw_Tracepoint_Opts {
+    usz size;
+    ulong cookie;
+}
+extern fn BpfLink* bpf_program__attach_raw_tracepoint(BpfProgram* prog, ZString tp_name);
+extern fn BpfLink* bpf_program__attach_raw_tracepoint_opts(
+    BpfProgram* prog,
+    ZString tp_name,
+    Bpf_Raw_Tracepoint_Opts* opts
+);
+
+struct Bpf_Trace_Opts {
+    usz size;
+    ulong cookie;
+}
+extern fn BpfLink* bpf_program__attach_trace(BpfProgram* prog);
+extern fn BpfLink* bpf_program__attach_trace_opts(BpfProgram* prog, Bpf_Trace_Opts* opts);
+
+extern fn BpfLink* bpf_program__attach_lsm(BpfProgram* prog);
+extern fn BpfLink* bpf_program__attach_cgroup(BpfProgram* prog, int cgroup_fd);
+extern fn BpfLink* bpf_program__attach_netns(BpfProgram* prog, int netns_fd);
+extern fn BpfLink* bpf_program__attach_sockmap(BpfProgram* prog, int map_fd);
+extern fn BpfLink* bpf_program__attach_xdp(BpfProgram* prog, int ifindex);
+extern fn BpfLink* bpf_program__attach_freplace(
+    BpfProgram* prog,
+    int target_fd,
+    ZString attach_func_name
+);
+
+struct Bpf_Netfilter_Opts {
+    usz size;
+    uint pf;
+    uint hooknum;
+    int priority;
+    uint flags;
+}
+extern fn BpfLink* bpf_program__attach_netfilter(BpfProgram* prog, Bpf_Netfilter_Opts* opts);
+
+struct Bpf_Tcx_Opts {
+    usz size;
+    uint flags;
+    uint relative_fd;
+    uint relative_id;
+    ulong expected_revision;
+}
+extern fn BpfLink* bpf_program__attach_tcx(BpfProgram* prog, int ifindex, Bpf_Tcx_Opts* opts);
+
+struct Bpf_Netkit_Opts {
+    usz size;
+    uint flags;
+    uint relative_fd;
+    uint relative_id;
+    ulong expected_revision;
+}
+extern fn BpfLink* bpf_program__attach_netkit(BpfProgram* prog, int ifindex, Bpf_Netkit_Opts* opts);
+
+struct Bpf_Cgroup_Opts {
+    usz size;
+    uint flags;
+    uint relative_fd;
+    uint relative_id;
+    ulong expected_revision;
+}
+extern fn BpfLink* bpf_program__attach_cgroup_opts(
+    BpfProgram* prog,
+    int cgroup_fd,
+    Bpf_Cgroup_Opts* opts
+);
+
+// Program properties 
+
+extern fn Bpf_Prog_Type bpf_program__type(BpfProgram* prog);
+extern fn int bpf_program__set_type(BpfProgram* prog, Bpf_Prog_Type type);
+extern fn Bpf_Attach_Type bpf_program__expected_attach_type(BpfProgram* prog);
+extern fn int bpf_program__set_expected_attach_type(BpfProgram* prog, Bpf_Attach_Type type);
+extern fn uint bpf_program__flags(BpfProgram* prog);
+extern fn int bpf_program__set_flags(BpfProgram* prog, uint flags);
+extern fn uint bpf_program__log_level(BpfProgram* prog);
+extern fn int bpf_program__set_log_level(BpfProgram* prog, uint log_level);
+extern fn ZString bpf_program__log_buf(BpfProgram* prog, usz* log_size);
+extern fn int bpf_program__set_log_buf(BpfProgram* prog, char* log_buf, usz log_size);
+extern fn Bpf_Func_Info* bpf_program__func_info(BpfProgram* prog);
+extern fn uint bpf_program__func_info_cnt(BpfProgram* prog);
+extern fn Bpf_Line_Info* bpf_program__line_info(BpfProgram* prog);
+extern fn uint bpf_program__line_info_cnt(BpfProgram* prog);
+extern fn int bpf_program__set_attach_target(
+    BpfProgram* prog,
+    int attach_prog_fd,
+    ZString attach_func_name
+);
+extern fn int bpf_program__clone(BpfProgram* prog, Bpf_Prog_Load_Opts* opts);
+
+// Struct ops 
+
+typedef BpfMap = void;
+typedef BpfProgAssocStructOpsOpts = void;
+typedef BpfIterLinkInfo = void;
+
+extern fn BpfLink* bpf_map__attach_struct_ops(BpfMap* map);
+extern fn int bpf_link__update_map(BpfLink* link, BpfMap* map);
+extern fn int bpf_program__assoc_struct_ops(
+    BpfProgram* prog,
+    BpfMap* map,
+    BpfProgAssocStructOpsOpts* opts
+);
+
+// Map lookup 
+
+extern fn BpfMap* bpf_object__find_map_by_name(BpfObject* obj, ZString name);
+extern fn int bpf_object__find_map_fd_by_name(BpfObject* obj, ZString name);
+extern fn BpfMap* bpf_object__next_map(BpfObject* obj, BpfMap* map);
+extern fn BpfMap* bpf_object__prev_map(BpfObject* obj, BpfMap* map);
+
+// Map properties 
+
+extern fn int bpf_map__set_autocreate(BpfMap* map, bool autocreate);
+extern fn bool bpf_map__autocreate(BpfMap* map);
+extern fn int bpf_map__set_autoattach(BpfMap* map, bool autoattach);
+extern fn bool bpf_map__autoattach(BpfMap* map);
+extern fn int bpf_map__fd(BpfMap* map);
+extern fn int bpf_map__reuse_fd(BpfMap* map, int fd);
+extern fn ZString bpf_map__name(BpfMap* map);
+extern fn Bpf_Map_Type bpf_map__type(BpfMap* map);
+extern fn int bpf_map__set_type(BpfMap* map, Bpf_Map_Type type);
+extern fn uint bpf_map__max_entries(BpfMap* map);
+extern fn int bpf_map__set_max_entries(BpfMap* map, uint max_entries);
+extern fn uint bpf_map__map_flags(BpfMap* map);
+extern fn int bpf_map__set_map_flags(BpfMap* map, uint flags);
+extern fn uint bpf_map__numa_node(BpfMap* map);
+extern fn int bpf_map__set_numa_node(BpfMap* map, uint numa_node);
+extern fn uint bpf_map__key_size(BpfMap* map);
+extern fn int bpf_map__set_key_size(BpfMap* map, uint size);
+extern fn uint bpf_map__value_size(BpfMap* map);
+extern fn int bpf_map__set_value_size(BpfMap* map, uint size);
+extern fn uint bpf_map__btf_key_type_id(BpfMap* map);
+extern fn uint bpf_map__btf_value_type_id(BpfMap* map);
+extern fn uint bpf_map__ifindex(BpfMap* map);
+extern fn int bpf_map__set_ifindex(BpfMap* map, uint ifindex);
+extern fn ulong bpf_map__map_extra(BpfMap* map);
+extern fn int bpf_map__set_map_extra(BpfMap* map, ulong map_extra);
+extern fn int bpf_map__set_initial_value(BpfMap* map, void* data, usz size);
+extern fn void* bpf_map__initial_value(BpfMap* map, usz* psize);
+extern fn bool bpf_map__is_internal(BpfMap* map);
+extern fn int bpf_map__set_pin_path(BpfMap* map, ZString path);
+extern fn ZString bpf_map__pin_path(BpfMap* map);
+extern fn bool bpf_map__is_pinned(BpfMap* map);
+extern fn int bpf_map__pin(BpfMap* map, ZString path);
+extern fn int bpf_map__unpin(BpfMap* map, ZString path);
+extern fn int bpf_map__set_inner_map_fd(BpfMap* map, int fd);
+extern fn BpfMap* bpf_map__inner_map(BpfMap* map);
+extern fn int bpf_map__lookup_elem(
+    BpfMap* map,
+    void* key,
+    usz key_sz,
+    void* value,
+    usz value_sz,
+    ulong flags
+);
+extern fn int bpf_map__update_elem(
+    BpfMap* map,
+    void* key,
+    usz key_sz,
+    void* value,
+    usz value_sz,
+    ulong flags
+);
+extern fn int bpf_map__delete_elem(BpfMap* map, void* key, usz key_sz, ulong flags);
+extern fn int bpf_map__lookup_and_delete_elem(
+    BpfMap* map,
+    void* key,
+    usz key_sz,
+    void* value,
+    usz value_sz,
+    ulong flags
+);
+extern fn int bpf_map__get_next_key(BpfMap* map, void* cur_key, void* next_key, usz key_sz);
+extern fn int bpf_map__set_exclusive_program(BpfMap* map, BpfProgram* prog);
+extern fn BpfProgram* bpf_map__exclusive_program(BpfMap* map);
+
+
+struct Bpf_Iter_Attach_Opts {
+    usz size;
+    BpfIterLinkInfo* link_info;
+    uint link_info_len;
+}
+extern fn BpfLink* bpf_program__attach_iter(BpfProgram* prog, Bpf_Iter_Attach_Opts* opts);
+
+struct Bpf_Xdp_Attach_Opts {
+    usz size;
+    int old_prog_fd;
+}
+struct Bpf_Xdp_Query_Opts {
+    usz size;
+    uint prog_id;
+    uint drv_prog_id;
+    uint hw_prog_id;
+    uint skb_prog_id;
+    char attach_mode;
+    ulong feature_flags;
+    uint xdp_zc_max_segs;
+}
+extern fn int bpf_xdp_attach(int ifindex, int prog_fd, uint flags, Bpf_Xdp_Attach_Opts* opts);
+extern fn int bpf_xdp_detach(int ifindex, uint flags, Bpf_Xdp_Attach_Opts* opts);
+extern fn int bpf_xdp_query(int ifindex, int flags, Bpf_Xdp_Query_Opts* opts);
+extern fn int bpf_xdp_query_id(int ifindex, int flags, uint* prog_id);
+
+// TC 
+
+constdef Bpf_Tc_Attach_Point : uint {
+    BPF_TC_INGRESS = 1,
+    BPF_TC_EGRESS  = 2,
+    BPF_TC_CUSTOM  = 4,
+    BPF_TC_QDISC   = 8,
+}
+
+constdef Bpf_Tc_Flags : uint {
+    BPF_TC_F_REPLACE = 1,
+}
+
+struct Bpf_Tc_Hook {
+    usz size;
+    int ifindex;
+    Bpf_Tc_Attach_Point attach_point;
+    uint parent;
+    uint handle;
+    ZString qdisc;
+}
+struct Bpf_Tc_Opts {
+    usz size;
+    int prog_fd;
+    uint flags;
+    uint prog_id;
+    uint handle;
+    uint priority;
+}
+extern fn int bpf_tc_hook_create(Bpf_Tc_Hook* hook);
+extern fn int bpf_tc_hook_destroy(Bpf_Tc_Hook* hook);
+extern fn int bpf_tc_attach(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
+extern fn int bpf_tc_detach(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
+extern fn int bpf_tc_query(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
+
+// Ring buffer 
+
+typedef RingBuffer = void;
+typedef Ring = void;
+typedef UserRingBuffer = void;
+
+alias Ring_Buffer_Sample_Fn = fn int(void* ctx, void* data, usz size);
+
+struct Ring_Buffer_Opts {
+    usz size;
+}
+extern fn RingBuffer* ring_buffer__new(
+    int map_fd,
+    Ring_Buffer_Sample_Fn sample_cb,
+    void* ctx,
+    Ring_Buffer_Opts* opts
+);
+extern fn void ring_buffer__free(RingBuffer* rb);
+extern fn int ring_buffer__add(
+    RingBuffer* rb,
+    int map_fd,
+    Ring_Buffer_Sample_Fn sample_cb,
+    void* ctx
+);
+extern fn int ring_buffer__poll(RingBuffer* rb, int timeout_ms);
+extern fn int ring_buffer__consume(RingBuffer* rb);
+extern fn int ring_buffer__consume_n(RingBuffer* rb, usz n);
+extern fn int ring_buffer__epoll_fd(RingBuffer* rb);
+extern fn Ring* ring_buffer__ring(RingBuffer* rb, uint idx);
+extern fn ulong ring__consumer_pos(Ring* r);
+extern fn ulong ring__producer_pos(Ring* r);
+extern fn usz ring__avail_data_size(Ring* r);
+extern fn usz ring__size(Ring* r);
+extern fn int ring__map_fd(Ring* r);
+extern fn int ring__consume(Ring* r);
+extern fn int ring__consume_n(Ring* r, usz n);
+
+struct User_Ring_Buffer_Opts {
+    usz size;
+}
+extern fn UserRingBuffer* user_ring_buffer__new(int map_fd, User_Ring_Buffer_Opts* opts);
+extern fn void* user_ring_buffer__reserve(UserRingBuffer* rb, uint size);
+extern fn void* user_ring_buffer__reserve_blocking(UserRingBuffer* rb, uint size, int timeout_ms);
+extern fn void user_ring_buffer__submit(UserRingBuffer* rb, void* sample);
+extern fn void user_ring_buffer__discard(UserRingBuffer* rb, void* sample);
+extern fn void user_ring_buffer__free(UserRingBuffer* rb);
+
+// Perf buffer 
+
+typedef PerfBuffer = void;
+
+alias Perf_Buffer_Sample_Fn = fn void(void* ctx, int cpu, void* data, uint size);
+alias Perf_Buffer_Lost_Fn = fn void(void* ctx, int cpu, ulong cnt);
+
+struct Perf_Buffer_Opts {
+    usz size;
+    uint sample_period;
+}
+extern fn PerfBuffer* perf_buffer__new(
+    int map_fd,
+    usz page_cnt,
+    Perf_Buffer_Sample_Fn sample_cb,
+    Perf_Buffer_Lost_Fn lost_cb,
+    void* ctx,
+    Perf_Buffer_Opts* opts
+);
+extern fn void perf_buffer__free(PerfBuffer* pb);
+extern fn int perf_buffer__epoll_fd(PerfBuffer* pb);
+extern fn int perf_buffer__poll(PerfBuffer* pb, int timeout_ms);
+extern fn int perf_buffer__consume(PerfBuffer* pb);
+extern fn int perf_buffer__consume_buffer(PerfBuffer* pb, usz buf_idx);
+extern fn usz perf_buffer__buffer_cnt(PerfBuffer* pb);
+extern fn int perf_buffer__buffer_fd(PerfBuffer* pb, usz buf_idx);
+extern fn int perf_buffer__buffer(PerfBuffer* pb, int buf_idx, void** buf, usz* buf_size);
+
+// Prog linfo 
+
+typedef BpfProgLinfo = void;
+typedef BpfProgInfo = void;
+
+extern fn void bpf_prog_linfo__free(BpfProgLinfo* prog_linfo);
+extern fn BpfProgLinfo* bpf_prog_linfo__new(BpfProgInfo* info);
+extern fn Bpf_Line_Info* bpf_prog_linfo__lfind_addr_func(
+    BpfProgLinfo* prog_linfo,
+    ulong addr,
+    uint func_idx,
+    uint nr_skip
+);
+extern fn Bpf_Line_Info* bpf_prog_linfo__lfind(
+    BpfProgLinfo* prog_linfo,
+    uint insn_off,
+    uint nr_skip
+);
+
+// Probing / misc 
+
+extern fn int libbpf_probe_bpf_prog_type(Bpf_Prog_Type prog_type, void* opts);
+extern fn int libbpf_probe_bpf_map_type(Bpf_Map_Type map_type, void* opts);
+// extern fn int libbpf_probe_bpf_helper(Bpf_Prog_Type prog_type, Bpf_Func_Id helper_id, void* opts);
+extern fn int libbpf_num_possible_cpus();
+
+// Skeleton 
+
+struct Bpf_Map_Skeleton {
+    ZString name;
+    BpfMap** map;
+    void** mmaped;
+    BpfLink** link;
+}
+struct Bpf_Prog_Skeleton {
+    ZString name;
+    BpfProgram** prog;
+    BpfLink** link;
+}
+struct Bpf_Object_Skeleton {
+    usz size;
+    ZString name;
+    void* data;
+    usz data_sz;
+    BpfObject** obj;
+    int map_cnt;
+    int map_skel_sz;
+    Bpf_Map_Skeleton* maps;
+    int prog_cnt;
+    int prog_skel_sz;
+    Bpf_Prog_Skeleton* progs;
+}
+extern fn int bpf_object__open_skeleton(Bpf_Object_Skeleton* s, Bpf_Object_Open_Opts* opts);
+extern fn int bpf_object__load_skeleton(Bpf_Object_Skeleton* s);
+extern fn int bpf_object__attach_skeleton(Bpf_Object_Skeleton* s);
+extern fn void bpf_object__detach_skeleton(Bpf_Object_Skeleton* s);
+extern fn void bpf_object__destroy_skeleton(Bpf_Object_Skeleton* s);
+
+struct Bpf_Var_Skeleton {
+    ZString name;
+    BpfMap** map;
+    void** addr;
+}
+struct Bpf_Object_Subskeleton {
+    usz size;
+    BpfObject* obj;
+    int map_cnt;
+    int map_skel_sz;
+    Bpf_Map_Skeleton* maps;
+    int prog_cnt;
+    int prog_skel_sz;
+    Bpf_Prog_Skeleton* progs;
+    int var_cnt;
+    int var_skel_sz;
+    Bpf_Var_Skeleton* vars;
+}
+extern fn int bpf_object__open_subskeleton(Bpf_Object_Subskeleton* s);
+extern fn void bpf_object__destroy_subskeleton(Bpf_Object_Subskeleton* s);
+
+// Gen loader 
+
+struct Gen_Loader_Opts {
+    usz size;
+    ZString data;
+    ZString insns;
+    uint data_sz;
+    uint insns_sz;
+    bool gen_hash;
+}
+extern fn int bpf_object__gen_loader(BpfObject* obj, Gen_Loader_Opts* opts);
+
+// Linker 
+
+typedef BpfLinker = void;
+
+struct Bpf_Linker_Opts {
+    usz size;
+}
+struct Bpf_Linker_File_Opts {
+    usz size;
+}
+extern fn BpfLinker* bpf_linker__new(ZString filename, Bpf_Linker_Opts* opts);
+extern fn BpfLinker* bpf_linker__new_fd(int fd, Bpf_Linker_Opts* opts);
+extern fn int bpf_linker__add_file(BpfLinker* linker, ZString filename, Bpf_Linker_File_Opts* opts);
+extern fn int bpf_linker__add_fd(BpfLinker* linker, int fd, Bpf_Linker_File_Opts* opts);
+extern fn int bpf_linker__add_buf(
+    BpfLinker* linker,
+    void* buf,
+    usz buf_sz,
+    Bpf_Linker_File_Opts* opts
+);
+extern fn int bpf_linker__finalize(BpfLinker* linker);
+extern fn void bpf_linker__free(BpfLinker* linker);
+
+// Custom prog handler 
+
+typedef BpfProgLoadOpts = void;
+
+alias Libbpf_Prog_Setup_Fn_T = fn int(BpfProgram* prog, long cookie);
+alias Libbpf_Prog_Prepare_Load_Fn_T = fn int(BpfProgram* prog, BpfProgLoadOpts* opts, long cookie);
+alias Libbpf_Prog_Attach_Fn_T = fn int(BpfProgram* prog, long cookie, BpfLink** link);
+
+struct Libbpf_Prog_Handler_Opts {
+    usz size;
+    long cookie;
+    Libbpf_Prog_Setup_Fn_T prog_setup_fn;
+    Libbpf_Prog_Prepare_Load_Fn_T prog_prepare_load_fn;
+    Libbpf_Prog_Attach_Fn_T prog_attach_fn;
+}
+extern fn int libbpf_register_prog_handler(
+    ZString sec,
+    Bpf_Prog_Type prog_type,
+    Bpf_Attach_Type exp_attach_type,
+    Libbpf_Prog_Handler_Opts* opts
+);
+extern fn int libbpf_unregister_prog_handler(int handler_id);

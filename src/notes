@@ -1,0 +1,11 @@
+const char*          -> ZString
+char*                -> ZString
+unsigned int         -> uint
+int                  -> int
+size_t               -> usz
+void                 -> void
+
+struct foo*          -> Foo*
+struct foo           -> struct Foo {...}
+
+typedef ...          -> alias ...
