@@ -32,7 +32,7 @@ constdef Libbpf_Errno {
     __LIBBPF_ERRNO__END,
 }
 
-extern fn int libbpf_strerror(int err, ZString buf, usz size);
+extern fn int libbpf_strerror(int err, char* buf, usz size);
 extern fn ZString libbpf_bpf_attach_type_str(Bpf_Attach_Type t);
 extern fn ZString libbpf_bpf_link_type_str(Bpf_Link_Type t);
 extern fn ZString libbpf_bpf_map_type_str(Bpf_Map_Type t);
@@ -44,16 +44,18 @@ enum Libbpf_Print_Level {
     LIBBPF_DEBUG,
 }
 
-// FIX: below
-alias Libbpf_Print_Fn_T = fn int(Libbpf_Print_Level level, ZString s,);
-extern fn Libbpf_Print_Fn_T libbpf_set_print(Libbpf_Print_Fn_T f);
 
-// FIX: below
+//TODO: requires va_list support
+alias VaList = void;
+alias LibbpfPrintFnT = fn int(Libbpf_Print_Level level, ZString fmt, VaList* ap);
+extern fn LibbpfPrintFnT libbpf_set_print(LibbpfPrintFnT cb);
+
 struct Bpf_Object_Open_Opts {
     usz size;
     ZString object_name;
     bool relaxed_maps;
     ZString pin_root_path;
+    uint __u32;
     ZString kconfig;
     ZString btf_custom_path;
     ZString kernel_log_buf;
@@ -65,8 +67,7 @@ struct Bpf_Object_Open_Opts {
 extern fn BpfObject* bpf_object__open(ZString path);
 extern fn BpfObject* bpf_object__open_file(ZString path, Bpf_Object_Open_Opts opts);
 
-// NOTE: Check obj_buf
-extern fn BpfObject* bpf_object__open_mem(void* obj_buf, usz obj_buf_sz, Bpf_Object_Open_Opts opts);
+extern fn BpfObject* bpf_object__open_mem(void* obj_buf, usz obj_buf_sz, Bpf_Object_Open_Opts* opts);
 extern fn int bpf_object__prepare(BpfObject* obj);
 extern fn int bpf_object__load(BpfObject* obj);
 extern fn void bpf_object__close(BpfObject* obj);
@@ -127,10 +128,9 @@ extern fn int bpf_link__destroy(BpfLink* link);
 
 extern fn BpfLink* bpf_program__attach(BpfProgram* prog);
 
-// NOTE: Check below
 struct Bpf_Perf_Event_Opts {
     usz size;
-    uint bpf_cookie;
+    ulong bpf_cookie;
     bool force_ioctl_attach;
     bool dont_enable;
 }
@@ -143,8 +143,6 @@ extern fn BpfLink* bpf_program__attach_perf_event_opts(
     Bpf_Perf_Event_Opts* opts
 );
 
-const PROBE_ATTACH_MODE_DEFAULT = 0;
-
 enum Probe_Attach_Mode {
     PROBE_ATTACH_MODE_DEFAULT,
     PROBE_ATTACH_MODE_LEGACY,
@@ -152,10 +150,9 @@ enum Probe_Attach_Mode {
     PROBE_ATTACH_MODE_LINK,
 }
 
-// NOTE: Check below
 struct Bpf_Kprobe_Opts {
     usz size;
-    uint bpf_cookie;
+    ulong bpf_cookie;
     usz offset;
     bool retprobe;
     Probe_Attach_Mode attach_mode;
@@ -164,7 +161,7 @@ struct Bpf_Kprobe_Opts {
 extern fn BpfLink* bpf_program__attach_kprobe(BpfProgram* prog, bool retprobe, ZString* func_name);
 extern fn BpfLink* bpf_program__attach_kprobe_opts(
     BpfProgram* prog,
-    ZString* func_name,
+    ZString func_name,
     Bpf_Kprobe_Opts* opts
 );
 
@@ -172,7 +169,7 @@ struct Bpf_Kprobe_Multi_Opts {
     usz size;
     ZString** syms;
     ulong* addrs;
-    uint* cookies;
+    ulong* cookies;
     usz cnt;
     bool retprobe;
     bool session;
@@ -181,39 +178,40 @@ struct Bpf_Kprobe_Multi_Opts {
 
 extern fn BpfLink* bpf_program__attach_kprobe_multi_opts(
     BpfProgram* prog,
-    ZString* pattern,
+    ZString pattern,
     Bpf_Kprobe_Opts* opts
 );
 
 struct Bpf_Uprobe_Multi_Opts {
     usz size;
-    ZString** syms;
+    ZString* syms;
     ulong* offsets;
     ulong* ref_ctr_offsets;
-    uint* cookies;
+    ulong* cookies;
     usz cnt;
     bool retprobe;
     bool session;
 }
 
-// NOTE: Change pid
+alias PidT = int;
+
 extern fn BpfLink* bpf_program__attach_uprobe_multi(
     BpfProgram* prog,
-    int pid,
-    ZString* binary_path,
-    ZString* func_pattern,
+    PidT pid,
+    ZString binary_path,
+    ZString func_pattern,
     Bpf_Uprobe_Multi_Opts* opts
 );
 
 struct Bpf_Ksyscall_Opts {
     usz size;
-    uint bpf_cookie;
+    ulong bpf_cookie;
     bool retprobe;
 }
 
 extern fn BpfLink* bpf_program__attach_ksyscall(
     BpfProgram* prog,
-    ZString* syscall_name,
+    ZString syscall_name,
     Bpf_Ksyscall_Opts* opts
 );
 
@@ -222,11 +220,11 @@ struct Bpf_Uprobe_Opts {
     usz ref_ctr_offset;
     ulong bpf_cookie;
     bool retprobe;
-    ZString* func_name;
+    ZString func_name;
     Probe_Attach_Mode attach_mode;
 }
 
-// Program attachment 
+// Program attachment
 
 extern fn BpfLink* bpf_program__attach_uprobe(
     BpfProgram* prog,
@@ -341,7 +339,7 @@ extern fn BpfLink* bpf_program__attach_cgroup_opts(
     Bpf_Cgroup_Opts* opts
 );
 
-// Program properties 
+// Program properties
 
 extern fn Bpf_Prog_Type bpf_program__type(BpfProgram* prog);
 extern fn int bpf_program__set_type(BpfProgram* prog, Bpf_Prog_Type type);
@@ -364,7 +362,7 @@ extern fn int bpf_program__set_attach_target(
 );
 extern fn int bpf_program__clone(BpfProgram* prog, Bpf_Prog_Load_Opts* opts);
 
-// Struct ops 
+// Struct ops
 
 typedef BpfMap = void;
 typedef BpfProgAssocStructOpsOpts = void;
@@ -378,14 +376,14 @@ extern fn int bpf_program__assoc_struct_ops(
     BpfProgAssocStructOpsOpts* opts
 );
 
-// Map lookup 
+// Map lookup
 
 extern fn BpfMap* bpf_object__find_map_by_name(BpfObject* obj, ZString name);
 extern fn int bpf_object__find_map_fd_by_name(BpfObject* obj, ZString name);
 extern fn BpfMap* bpf_object__next_map(BpfObject* obj, BpfMap* map);
 extern fn BpfMap* bpf_object__prev_map(BpfObject* obj, BpfMap* map);
 
-// Map properties 
+// Map properties
 
 extern fn int bpf_map__set_autocreate(BpfMap* map, bool autocreate);
 extern fn bool bpf_map__autocreate(BpfMap* map);
@@ -478,7 +476,7 @@ extern fn int bpf_xdp_detach(int ifindex, uint flags, Bpf_Xdp_Attach_Opts* opts)
 extern fn int bpf_xdp_query(int ifindex, int flags, Bpf_Xdp_Query_Opts* opts);
 extern fn int bpf_xdp_query_id(int ifindex, int flags, uint* prog_id);
 
-// TC 
+// TC
 
 constdef Bpf_Tc_Attach_Point : uint {
     BPF_TC_INGRESS = 1,
@@ -513,7 +511,7 @@ extern fn int bpf_tc_attach(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
 extern fn int bpf_tc_detach(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
 extern fn int bpf_tc_query(Bpf_Tc_Hook* hook, Bpf_Tc_Opts* opts);
 
-// Ring buffer 
+// Ring buffer
 
 typedef RingBuffer = void;
 typedef Ring = void;
@@ -560,7 +558,7 @@ extern fn void user_ring_buffer__submit(UserRingBuffer* rb, void* sample);
 extern fn void user_ring_buffer__discard(UserRingBuffer* rb, void* sample);
 extern fn void user_ring_buffer__free(UserRingBuffer* rb);
 
-// Perf buffer 
+// Perf buffer
 
 typedef PerfBuffer = void;
 
@@ -588,7 +586,7 @@ extern fn usz perf_buffer__buffer_cnt(PerfBuffer* pb);
 extern fn int perf_buffer__buffer_fd(PerfBuffer* pb, usz buf_idx);
 extern fn int perf_buffer__buffer(PerfBuffer* pb, int buf_idx, void** buf, usz* buf_size);
 
-// Prog linfo 
+// Prog linfo
 
 typedef BpfProgLinfo = void;
 typedef BpfProgInfo = void;
@@ -607,14 +605,14 @@ extern fn Bpf_Line_Info* bpf_prog_linfo__lfind(
     uint nr_skip
 );
 
-// Probing / misc 
+// Probing / misc
 
 extern fn int libbpf_probe_bpf_prog_type(Bpf_Prog_Type prog_type, void* opts);
 extern fn int libbpf_probe_bpf_map_type(Bpf_Map_Type map_type, void* opts);
 // extern fn int libbpf_probe_bpf_helper(Bpf_Prog_Type prog_type, Bpf_Func_Id helper_id, void* opts);
 extern fn int libbpf_num_possible_cpus();
 
-// Skeleton 
+// Skeleton
 
 struct Bpf_Map_Skeleton {
     ZString name;
@@ -667,7 +665,7 @@ struct Bpf_Object_Subskeleton {
 extern fn int bpf_object__open_subskeleton(Bpf_Object_Subskeleton* s);
 extern fn void bpf_object__destroy_subskeleton(Bpf_Object_Subskeleton* s);
 
-// Gen loader 
+// Gen loader
 
 struct Gen_Loader_Opts {
     usz size;
@@ -679,7 +677,7 @@ struct Gen_Loader_Opts {
 }
 extern fn int bpf_object__gen_loader(BpfObject* obj, Gen_Loader_Opts* opts);
 
-// Linker 
+// Linker
 
 typedef BpfLinker = void;
 
@@ -702,7 +700,7 @@ extern fn int bpf_linker__add_buf(
 extern fn int bpf_linker__finalize(BpfLinker* linker);
 extern fn void bpf_linker__free(BpfLinker* linker);
 
-// Custom prog handler 
+// Custom prog handler
 
 typedef BpfProgLoadOpts = void;
 
