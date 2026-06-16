@@ -45,7 +45,7 @@ enum Libbpf_Print_Level {
 }
 
 
-//TODO: requires va_list support
+// TODO: requires va_list support
 alias VaList = void;
 alias LibbpfPrintFnT = fn int(Libbpf_Print_Level level, ZString fmt, VaList* ap);
 extern fn LibbpfPrintFnT libbpf_set_print(LibbpfPrintFnT cb);
@@ -67,18 +67,22 @@ struct Bpf_Object_Open_Opts {
 extern fn BpfObject* bpf_object__open(ZString path);
 extern fn BpfObject* bpf_object__open_file(ZString path, Bpf_Object_Open_Opts opts);
 
-extern fn BpfObject* bpf_object__open_mem(void* obj_buf, usz obj_buf_sz, Bpf_Object_Open_Opts* opts);
+extern fn BpfObject* bpf_object__open_mem(
+    void* obj_buf,
+    usz obj_buf_sz,
+    Bpf_Object_Open_Opts* opts
+);
 extern fn int bpf_object__prepare(BpfObject* obj);
 extern fn int bpf_object__load(BpfObject* obj);
 extern fn void bpf_object__close(BpfObject* obj);
-extern fn int bpf_object__pin_maps(BpfObject* obj, ZString* path);
-extern fn int bpf_object__unpin_maps(BpfObject* obj, ZString* path);
-extern fn int bpf_object__pin_programs(BpfObject* obj, ZString* path);
-extern fn int bpf_object__unpin_programs(BpfObject* obj, ZString* path);
-extern fn int bpf_object__pin(BpfObject* object, ZString* path);
-extern fn int bpf_object__unpin(BpfObject* object, ZString* path);
+extern fn int bpf_object__pin_maps(BpfObject* obj, ZString path);
+extern fn int bpf_object__unpin_maps(BpfObject* obj, ZString path);
+extern fn int bpf_object__pin_programs(BpfObject* obj, ZString path);
+extern fn int bpf_object__unpin_programs(BpfObject* obj, ZString path);
+extern fn int bpf_object__pin(BpfObject* object, ZString path);
+extern fn int bpf_object__unpin(BpfObject* object, ZString path);
 
-extern fn ZString* bpf_object__name(BpfObject* obj);
+extern fn ZString bpf_object__name(BpfObject* obj);
 extern fn uint bpf_object__kversion(BpfObject* obj);
 extern fn int bpf_object__set_kversion(BpfObject* obj, uint kern_version);
 
@@ -86,14 +90,14 @@ extern fn int bpf_object__token_fd(BpfObject* obj);
 extern fn Btf* bpf_object__btf(BpfObject* obj);
 extern fn int bpf_object__btf_fd(BpfObject* obj);
 
-extern fn BpfProgram* bpf_object__find_program_by_name(BpfObject* obj, ZString* name);
+extern fn BpfProgram* bpf_object__find_program_by_name(BpfObject* obj, ZString name);
 extern fn int libbpf_prog_type_by_name(
-    ZString* name,
+    ZString name,
     Bpf_Prog_Type* prog_type,
     Bpf_Attach_Type* expected_attach_type
 );
-extern fn int libbpf_attach_type_by_name(ZString* name, Bpf_Attach_Type* attach_type);
-extern fn int libbpf_find_vmlinux_btf_id(ZString* name, Bpf_Attach_Type attach_type);
+extern fn int libbpf_attach_type_by_name(ZString name, Bpf_Attach_Type* attach_type);
+extern fn int libbpf_find_vmlinux_btf_id(ZString name, Bpf_Attach_Type attach_type);
 
 extern fn BpfProgram* bpf_object__next_program(BpfObject* obj, BpfProgram* prog);
 extern fn BpfProgram* bpf_object__prev_program(BpfObject* obj, BpfProgram* prog);
@@ -110,15 +114,15 @@ extern fn int bpf_program__set_insns(BpfProgram* prog, BpfInsn* new_insns, usz n
 extern fn usz bpf_program__insn_cnt(BpfProgram* prog);
 
 extern fn int bpf_program__fd(BpfProgram* prog);
-extern fn int bpf_program__pin(BpfProgram* prog, ZString* path);
-extern fn int bpf_program__unpin(BpfProgram* prog, ZString* path);
+extern fn int bpf_program__pin(BpfProgram* prog, ZString path);
+extern fn int bpf_program__unpin(BpfProgram* prog, ZString path);
 extern fn void bpf_program__unload(BpfProgram* prog);
 
 
-extern fn BpfLink* bpf_link__open(ZString* path);
+extern fn BpfLink* bpf_link__open(ZString path);
 extern fn int bpf_link__fd(BpfLink* link);
 extern fn ZString bpf_link__pin_path(BpfLink* link);
-extern fn int bpf_link__pin(BpfLink* link, ZString* path);
+extern fn int bpf_link__pin(BpfLink* link, ZString path);
 extern fn int bpf_link__unpin(BpfLink* link);
 extern fn int bpf_link__update_program(BpfLink* link, BpfProgram* prog);
 extern fn void bpf_link__disconnect(BpfLink* link);
@@ -158,7 +162,7 @@ struct Bpf_Kprobe_Opts {
     Probe_Attach_Mode attach_mode;
 }
 
-extern fn BpfLink* bpf_program__attach_kprobe(BpfProgram* prog, bool retprobe, ZString* func_name);
+extern fn BpfLink* bpf_program__attach_kprobe(BpfProgram* prog, bool retprobe, ZString func_name);
 extern fn BpfLink* bpf_program__attach_kprobe_opts(
     BpfProgram* prog,
     ZString func_name,
@@ -609,7 +613,7 @@ extern fn Bpf_Line_Info* bpf_prog_linfo__lfind(
 
 extern fn int libbpf_probe_bpf_prog_type(Bpf_Prog_Type prog_type, void* opts);
 extern fn int libbpf_probe_bpf_map_type(Bpf_Map_Type map_type, void* opts);
-// extern fn int libbpf_probe_bpf_helper(Bpf_Prog_Type prog_type, Bpf_Func_Id helper_id, void* opts);
+extern fn int libbpf_probe_bpf_helper(Bpf_Prog_Type prog_type, Bpf_Func_Id helper_id, void* opts);
 extern fn int libbpf_num_possible_cpus();
 
 // Skeleton
