@@ -1,0 +1,1154 @@
+module bpf;
+import libbpf;
+
+enum BpfAttachType : int
+{
+    BPF_CGROUP_INET_INGRESS,
+    BPF_CGROUP_INET_EGRESS,
+    BPF_CGROUP_INET_SOCK_CREATE,
+    BPF_CGROUP_SOCK_OPS,
+    BPF_SK_SKB_STREAM_PARSER,
+    BPF_SK_SKB_STREAM_VERDICT,
+    BPF_CGROUP_DEVICE,
+    BPF_SK_MSG_VERDICT,
+    BPF_CGROUP_INET4_BIND,
+    BPF_CGROUP_INET6_BIND,
+    BPF_CGROUP_INET4_CONNECT,
+    BPF_CGROUP_INET6_CONNECT,
+    BPF_CGROUP_INET4_POST_BIND,
+    BPF_CGROUP_INET6_POST_BIND,
+    BPF_CGROUP_UDP4_SENDMSG,
+    BPF_CGROUP_UDP6_SENDMSG,
+    BPF_LIRC_MODE2,
+    BPF_FLOW_DISSECTOR,
+    BPF_CGROUP_SYSCTL,
+    BPF_CGROUP_UDP4_RECVMSG,
+    BPF_CGROUP_UDP6_RECVMSG,
+    BPF_CGROUP_GETSOCKOPT,
+    BPF_CGROUP_SETSOCKOPT,
+    BPF_TRACE_RAW_TP,
+    BPF_TRACE_FENTRY,
+    BPF_TRACE_FEXIT,
+    BPF_MODIFY_RETURN,
+    BPF_LSM_MAC,
+    BPF_TRACE_ITER,
+    BPF_CGROUP_INET4_GETPEERNAME,
+    BPF_CGROUP_INET6_GETPEERNAME,
+    BPF_CGROUP_INET4_GETSOCKNAME,
+    BPF_CGROUP_INET6_GETSOCKNAME,
+    BPF_XDP_DEVMAP,
+    BPF_CGROUP_INET_SOCK_RELEASE,
+    BPF_XDP_CPUMAP,
+    BPF_SK_LOOKUP,
+    BPF_XDP,
+    BPF_SK_SKB_VERDICT,
+    BPF_SK_REUSEPORT_SELECT,
+    BPF_SK_REUSEPORT_SELECT_OR_MIGRATE,
+    BPF_PERF_EVENT,
+    BPF_TRACE_KPROBE_MULTI,
+    BPF_LSM_CGROUP,
+    BPF_STRUCT_OPS,
+    BPF_NETFILTER,
+    BPF_TCX_INGRESS,
+    BPF_TCX_EGRESS,
+    BPF_TRACE_UPROBE_MULTI,
+    BPF_CGROUP_UNIX_CONNECT,
+    BPF_CGROUP_UNIX_SENDMSG,
+    BPF_CGROUP_UNIX_RECVMSG,
+    BPF_CGROUP_UNIX_GETPEERNAME,
+    BPF_CGROUP_UNIX_GETSOCKNAME,
+    BPF_NETKIT_PRIMARY,
+    BPF_NETKIT_PEER,
+    BPF_TRACE_KPROBE_SESSION,
+    BPF_TRACE_UPROBE_SESSION,
+    __MAX_BPF_ATTACH_TYPE
+}
+
+constdef BpfLinkType
+{
+    BPF_LINK_TYPE_UNSPEC         = 0,
+    BPF_LINK_TYPE_RAW_TRACEPOINT = 1,
+    BPF_LINK_TYPE_TRACING        = 2,
+    BPF_LINK_TYPE_CGROUP         = 3,
+    BPF_LINK_TYPE_ITER           = 4,
+    BPF_LINK_TYPE_NETNS          = 5,
+    BPF_LINK_TYPE_XDP            = 6,
+    BPF_LINK_TYPE_PERF_EVENT     = 7,
+    BPF_LINK_TYPE_KPROBE_MULTI   = 8,
+    BPF_LINK_TYPE_STRUCT_OPS     = 9,
+    BPF_LINK_TYPE_NETFILTER      = 10,
+    BPF_LINK_TYPE_TCX            = 11,
+    BPF_LINK_TYPE_UPROBE_MULTI   = 12,
+    BPF_LINK_TYPE_NETKIT         = 13,
+    BPF_LINK_TYPE_SOCKMAP        = 14,
+    __MAX_BPF_LINK_TYPE,
+}
+
+const BPF_MAP_TYPE_CGROUP_STORAGE        = BpfMapType.BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED;
+const BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE = BpfMapType.BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED;
+
+enum BpfMapType
+{
+    BPF_MAP_TYPE_UNSPEC,
+    BPF_MAP_TYPE_HASH,
+    BPF_MAP_TYPE_ARRAY,
+    BPF_MAP_TYPE_PROG_ARRAY,
+    BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+    BPF_MAP_TYPE_PERCPU_HASH,
+    BPF_MAP_TYPE_PERCPU_ARRAY,
+    BPF_MAP_TYPE_STACK_TRACE,
+    BPF_MAP_TYPE_CGROUP_ARRAY,
+    BPF_MAP_TYPE_LRU_HASH,
+    BPF_MAP_TYPE_LRU_PERCPU_HASH,
+    BPF_MAP_TYPE_LPM_TRIE,
+    BPF_MAP_TYPE_ARRAY_OF_MAPS,
+    BPF_MAP_TYPE_HASH_OF_MAPS,
+    BPF_MAP_TYPE_DEVMAP,
+    BPF_MAP_TYPE_SOCKMAP,
+    BPF_MAP_TYPE_CPUMAP,
+    BPF_MAP_TYPE_XSKMAP,
+    BPF_MAP_TYPE_SOCKHASH,
+    BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED,
+    BPF_MAP_TYPE_CGROUP_STORAGE,
+    BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+    BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED,
+    BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE,
+    BPF_MAP_TYPE_QUEUE,
+    BPF_MAP_TYPE_STACK,
+    BPF_MAP_TYPE_SK_STORAGE,
+    BPF_MAP_TYPE_DEVMAP_HASH,
+    BPF_MAP_TYPE_STRUCT_OPS,
+    BPF_MAP_TYPE_RINGBUF,
+    BPF_MAP_TYPE_INODE_STORAGE,
+    BPF_MAP_TYPE_TASK_STORAGE,
+    BPF_MAP_TYPE_BLOOM_FILTER,
+    BPF_MAP_TYPE_USER_RINGBUF,
+    BPF_MAP_TYPE_CGRP_STORAGE,
+    BPF_MAP_TYPE_ARENA,
+    BPF_MAP_TYPE_INSN_ARRAY,
+    __MAX_BPF_MAP_TYPE
+}
+
+enum BpfProgType
+{
+    BPF_PROG_TYPE_UNSPEC,
+    BPF_PROG_TYPE_SOCKET_FILTER,
+    BPF_PROG_TYPE_KPROBE,
+    BPF_PROG_TYPE_SCHED_CLS,
+    BPF_PROG_TYPE_SCHED_ACT,
+    BPF_PROG_TYPE_TRACEPOINT,
+    BPF_PROG_TYPE_XDP,
+    BPF_PROG_TYPE_PERF_EVENT,
+    BPF_PROG_TYPE_CGROUP_SKB,
+    BPF_PROG_TYPE_CGROUP_SOCK,
+    BPF_PROG_TYPE_LWT_IN,
+    BPF_PROG_TYPE_LWT_OUT,
+    BPF_PROG_TYPE_LWT_XMIT,
+    BPF_PROG_TYPE_SOCK_OPS,
+    BPF_PROG_TYPE_SK_SKB,
+    BPF_PROG_TYPE_CGROUP_DEVICE,
+    BPF_PROG_TYPE_SK_MSG,
+    BPF_PROG_TYPE_RAW_TRACEPOINT,
+    BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+    BPF_PROG_TYPE_LWT_SEG6LOCAL,
+    BPF_PROG_TYPE_LIRC_MODE2,
+    BPF_PROG_TYPE_SK_REUSEPORT,
+    BPF_PROG_TYPE_FLOW_DISSECTOR,
+    BPF_PROG_TYPE_CGROUP_SYSCTL,
+    BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+    BPF_PROG_TYPE_CGROUP_SOCKOPT,
+    BPF_PROG_TYPE_TRACING,
+    BPF_PROG_TYPE_STRUCT_OPS,
+    BPF_PROG_TYPE_EXT,
+    BPF_PROG_TYPE_LSM,
+    BPF_PROG_TYPE_SK_LOOKUP,
+    BPF_PROG_TYPE_SYSCALL,
+    BPF_PROG_TYPE_NETFILTER,
+    __MAX_BPF_PROG_TYPE
+}
+
+struct BpfLineInfo
+{
+    uint insn_off;
+    uint file_name_off;
+    uint line_off;
+    uint line_col;
+}
+
+struct BpfFuncInfo
+{
+    uint insn_off;
+    uint type_id;
+}
+
+constdef BpfFuncId : uint
+{
+    BPF_FUNC_UNSPEC                         = 0,
+    BPF_FUNC_MAP_LOOKUP_ELEM                = 1,
+    BPF_FUNC_MAP_UPDATE_ELEM                = 2,
+    BPF_FUNC_MAP_DELETE_ELEM                = 3,
+    BPF_FUNC_PROBE_READ                     = 4,
+    BPF_FUNC_KTIME_GET_NS                   = 5,
+    BPF_FUNC_TRACE_PRINTK                   = 6,
+    BPF_FUNC_GET_PRANDOM_U32                = 7,
+    BPF_FUNC_GET_SMP_PROCESSOR_ID           = 8,
+    BPF_FUNC_SKB_STORE_BYTES                = 9,
+    BPF_FUNC_L3_CSUM_REPLACE                = 10,
+    BPF_FUNC_L4_CSUM_REPLACE                = 11,
+    BPF_FUNC_TAIL_CALL                      = 12,
+    BPF_FUNC_CLONE_REDIRECT                 = 13,
+    BPF_FUNC_GET_CURRENT_PID_TGID           = 14,
+    BPF_FUNC_GET_CURRENT_UID_GID            = 15,
+    BPF_FUNC_GET_CURRENT_COMM               = 16,
+    BPF_FUNC_GET_CGROUP_CLASSID             = 17,
+    BPF_FUNC_SKB_VLAN_PUSH                  = 18,
+    BPF_FUNC_SKB_VLAN_POP                   = 19,
+    BPF_FUNC_SKB_GET_TUNNEL_KEY             = 20,
+    BPF_FUNC_SKB_SET_TUNNEL_KEY             = 21,
+    BPF_FUNC_PERF_EVENT_READ                = 22,
+    BPF_FUNC_REDIRECT                       = 23,
+    BPF_FUNC_GET_ROUTE_REALM                = 24,
+    BPF_FUNC_PERF_EVENT_OUTPUT              = 25,
+    BPF_FUNC_SKB_LOAD_BYTES                 = 26,
+    BPF_FUNC_GET_STACKID                    = 27,
+    BPF_FUNC_CSUM_DIFF                      = 28,
+    BPF_FUNC_SKB_GET_TUNNEL_OPT             = 29,
+    BPF_FUNC_SKB_SET_TUNNEL_OPT             = 30,
+    BPF_FUNC_SKB_CHANGE_PROTO               = 31,
+    BPF_FUNC_SKB_CHANGE_TYPE                = 32,
+    BPF_FUNC_SKB_UNDER_CGROUP               = 33,
+    BPF_FUNC_GET_HASH_RECALC                = 34,
+    BPF_FUNC_GET_CURRENT_TASK               = 35,
+    BPF_FUNC_PROBE_WRITE_USER               = 36,
+    BPF_FUNC_CURRENT_TASK_UNDER_CGROUP      = 37,
+    BPF_FUNC_SKB_CHANGE_TAIL                = 38,
+    BPF_FUNC_SKB_PULL_DATA                  = 39,
+    BPF_FUNC_CSUM_UPDATE                    = 40,
+    BPF_FUNC_SET_HASH_INVALID               = 41,
+    BPF_FUNC_GET_NUMA_NODE_ID               = 42,
+    BPF_FUNC_SKB_CHANGE_HEAD                = 43,
+    BPF_FUNC_XDP_ADJUST_HEAD                = 44,
+    BPF_FUNC_PROBE_READ_STR                 = 45,
+    BPF_FUNC_GET_SOCKET_COOKIE              = 46,
+    BPF_FUNC_GET_SOCKET_UID                 = 47,
+    BPF_FUNC_SET_HASH                       = 48,
+    BPF_FUNC_SETSOCKOPT                     = 49,
+    BPF_FUNC_SKB_ADJUST_ROOM                = 50,
+    BPF_FUNC_REDIRECT_MAP                   = 51,
+    BPF_FUNC_SK_REDIRECT_MAP                = 52,
+    BPF_FUNC_SOCK_MAP_UPDATE                = 53,
+    BPF_FUNC_XDP_ADJUST_META                = 54,
+    BPF_FUNC_PERF_EVENT_READ_VALUE          = 55,
+    BPF_FUNC_PERF_PROG_READ_VALUE           = 56,
+    BPF_FUNC_GETSOCKOPT                     = 57,
+    BPF_FUNC_OVERRIDE_RETURN                = 58,
+    BPF_FUNC_SOCK_OPS_CB_FLAGS_SET          = 59,
+    BPF_FUNC_MSG_REDIRECT_MAP               = 60,
+    BPF_FUNC_MSG_APPLY_BYTES                = 61,
+    BPF_FUNC_MSG_CORK_BYTES                 = 62,
+    BPF_FUNC_MSG_PULL_DATA                  = 63,
+    BPF_FUNC_BIND                           = 64,
+    BPF_FUNC_XDP_ADJUST_TAIL                = 65,
+    BPF_FUNC_SKB_GET_XFRM_STATE             = 66,
+    BPF_FUNC_GET_STACK                      = 67,
+    BPF_FUNC_SKB_LOAD_BYTES_RELATIVE        = 68,
+    BPF_FUNC_FIB_LOOKUP                     = 69,
+    BPF_FUNC_SOCK_HASH_UPDATE               = 70,
+    BPF_FUNC_MSG_REDIRECT_HASH              = 71,
+    BPF_FUNC_SK_REDIRECT_HASH               = 72,
+    BPF_FUNC_LWT_PUSH_ENCAP                 = 73,
+    BPF_FUNC_LWT_SEG6_STORE_BYTES           = 74,
+    BPF_FUNC_LWT_SEG6_ADJUST_SRH            = 75,
+    BPF_FUNC_LWT_SEG6_ACTION                = 76,
+    BPF_FUNC_RC_REPEAT                      = 77,
+    BPF_FUNC_RC_KEYDOWN                     = 78,
+    BPF_FUNC_SKB_CGROUP_ID                  = 79,
+    BPF_FUNC_GET_CURRENT_CGROUP_ID          = 80,
+    BPF_FUNC_GET_LOCAL_STORAGE              = 81,
+    BPF_FUNC_SK_SELECT_REUSEPORT            = 82,
+    BPF_FUNC_SKB_ANCESTOR_CGROUP_ID         = 83,
+    BPF_FUNC_SK_LOOKUP_TCP                  = 84,
+    BPF_FUNC_SK_LOOKUP_UDP                  = 85,
+    BPF_FUNC_SK_RELEASE                     = 86,
+    BPF_FUNC_MAP_PUSH_ELEM                  = 87,
+    BPF_FUNC_MAP_POP_ELEM                   = 88,
+    BPF_FUNC_MAP_PEEK_ELEM                  = 89,
+    BPF_FUNC_MSG_PUSH_DATA                  = 90,
+    BPF_FUNC_MSG_POP_DATA                   = 91,
+    BPF_FUNC_RC_POINTER_REL                 = 92,
+    BPF_FUNC_SPIN_LOCK                      = 93,
+    BPF_FUNC_SPIN_UNLOCK                    = 94,
+    BPF_FUNC_SK_FULLSOCK                    = 95,
+    BPF_FUNC_TCP_SOCK                       = 96,
+    BPF_FUNC_SKB_ECN_SET_CE                 = 97,
+    BPF_FUNC_GET_LISTENER_SOCK              = 98,
+    BPF_FUNC_SKC_LOOKUP_TCP                 = 99,
+    BPF_FUNC_TCP_CHECK_SYNCOOKIE            = 100,
+    BPF_FUNC_SYSCTL_GET_NAME                = 101,
+    BPF_FUNC_SYSCTL_GET_CURRENT_VALUE       = 102,
+    BPF_FUNC_SYSCTL_GET_NEW_VALUE           = 103,
+    BPF_FUNC_SYSCTL_SET_NEW_VALUE           = 104,
+    BPF_FUNC_STRTOL                         = 105,
+    BPF_FUNC_STRTOUL                        = 106,
+    BPF_FUNC_SK_STORAGE_GET                 = 107,
+    BPF_FUNC_SK_STORAGE_DELETE              = 108,
+    BPF_FUNC_SEND_SIGNAL                    = 109,
+    BPF_FUNC_TCP_GEN_SYNCOOKIE              = 110,
+    BPF_FUNC_SKB_OUTPUT                     = 111,
+    BPF_FUNC_PROBE_READ_USER                = 112,
+    BPF_FUNC_PROBE_READ_KERNEL              = 113,
+    BPF_FUNC_PROBE_READ_USER_STR            = 114,
+    BPF_FUNC_PROBE_READ_KERNEL_STR          = 115,
+    BPF_FUNC_TCP_SEND_ACK                   = 116,
+    BPF_FUNC_SEND_SIGNAL_THREAD             = 117,
+    BPF_FUNC_JIFFIES64                      = 118,
+    BPF_FUNC_READ_BRANCH_RECORDS            = 119,
+    BPF_FUNC_GET_NS_CURRENT_PID_TGID        = 120,
+    BPF_FUNC_XDP_OUTPUT                     = 121,
+    BPF_FUNC_GET_NETNS_COOKIE               = 122,
+    BPF_FUNC_GET_CURRENT_ANCESTOR_CGROUP_ID = 123,
+    BPF_FUNC_SK_ASSIGN                      = 124,
+    BPF_FUNC_KTIME_GET_BOOT_NS              = 125,
+    BPF_FUNC_SEQ_PRINTF                     = 126,
+    BPF_FUNC_SEQ_WRITE                      = 127,
+    BPF_FUNC_SK_CGROUP_ID                   = 128,
+    BPF_FUNC_SK_ANCESTOR_CGROUP_ID          = 129,
+    BPF_FUNC_RINGBUF_OUTPUT                 = 130,
+    BPF_FUNC_RINGBUF_RESERVE                = 131,
+    BPF_FUNC_RINGBUF_SUBMIT                 = 132,
+    BPF_FUNC_RINGBUF_DISCARD                = 133,
+    BPF_FUNC_RINGBUF_QUERY                  = 134,
+    BPF_FUNC_CSUM_LEVEL                     = 135,
+    BPF_FUNC_SKC_TO_TCP6_SOCK               = 136,
+    BPF_FUNC_SKC_TO_TCP_SOCK                = 137,
+    BPF_FUNC_SKC_TO_TCP_TIMEWAIT_SOCK       = 138,
+    BPF_FUNC_SKC_TO_TCP_REQUEST_SOCK        = 139,
+    BPF_FUNC_SKC_TO_UDP6_SOCK               = 140,
+    BPF_FUNC_GET_TASK_STACK                 = 141,
+    BPF_FUNC_LOAD_HDR_OPT                   = 142,
+    BPF_FUNC_STORE_HDR_OPT                  = 143,
+    BPF_FUNC_RESERVE_HDR_OPT                = 144,
+    BPF_FUNC_INODE_STORAGE_GET              = 145,
+    BPF_FUNC_INODE_STORAGE_DELETE           = 146,
+    BPF_FUNC_D_PATH                         = 147,
+    BPF_FUNC_COPY_FROM_USER                 = 148,
+    BPF_FUNC_SNPRINTF_BTF                   = 149,
+    BPF_FUNC_SEQ_PRINTF_BTF                 = 150,
+    BPF_FUNC_SKB_CGROUP_CLASSID             = 151,
+    BPF_FUNC_REDIRECT_NEIGH                 = 152,
+    BPF_FUNC_PER_CPU_PTR                    = 153,
+    BPF_FUNC_THIS_CPU_PTR                   = 154,
+    BPF_FUNC_REDIRECT_PEER                  = 155,
+    BPF_FUNC_TASK_STORAGE_GET               = 156,
+    BPF_FUNC_TASK_STORAGE_DELETE            = 157,
+    BPF_FUNC_GET_CURRENT_TASK_BTF           = 158,
+    BPF_FUNC_BPRM_OPTS_SET                  = 159,
+    BPF_FUNC_KTIME_GET_COARSE_NS            = 160,
+    BPF_FUNC_IMA_INODE_HASH                 = 161,
+    BPF_FUNC_SOCK_FROM_FILE                 = 162,
+    BPF_FUNC_CHECK_MTU                      = 163,
+    BPF_FUNC_FOR_EACH_MAP_ELEM              = 164,
+    BPF_FUNC_SNPRINTF                       = 165,
+    BPF_FUNC_SYS_BPF                        = 166,
+    BPF_FUNC_BTF_FIND_BY_NAME_KIND          = 167,
+    BPF_FUNC_SYS_CLOSE                      = 168,
+    BPF_FUNC_TIMER_INIT                     = 169,
+    BPF_FUNC_TIMER_SET_CALLBACK             = 170,
+    BPF_FUNC_TIMER_START                    = 171,
+    BPF_FUNC_TIMER_CANCEL                   = 172,
+    BPF_FUNC_GET_FUNC_IP                    = 173,
+    BPF_FUNC_GET_ATTACH_COOKIE              = 174,
+    BPF_FUNC_TASK_PT_REGS                   = 175,
+    BPF_FUNC_GET_BRANCH_SNAPSHOT            = 176,
+    BPF_FUNC_TRACE_VPRINTK                  = 177,
+    BPF_FUNC_SKC_TO_UNIX_SOCK               = 178,
+    BPF_FUNC_KALLSYMS_LOOKUP_NAME           = 179,
+    BPF_FUNC_FIND_VMA                       = 180,
+    BPF_FUNC_LOOP                           = 181,
+    BPF_FUNC_STRNCMP                        = 182,
+    BPF_FUNC_GET_FUNC_ARG                   = 183,
+    BPF_FUNC_GET_FUNC_RET                   = 184,
+    BPF_FUNC_GET_FUNC_ARG_CNT               = 185,
+    BPF_FUNC_GET_RETVAL                     = 186,
+    BPF_FUNC_SET_RETVAL                     = 187,
+    BPF_FUNC_XDP_GET_BUFF_LEN               = 188,
+    BPF_FUNC_XDP_LOAD_BYTES                 = 189,
+    BPF_FUNC_XDP_STORE_BYTES                = 190,
+    BPF_FUNC_COPY_FROM_USER_TASK            = 191,
+    BPF_FUNC_SKB_SET_TSTAMP                 = 192,
+    BPF_FUNC_IMA_FILE_HASH                  = 193,
+    BPF_FUNC_KPTR_XCHG                      = 194,
+    BPF_FUNC_MAP_LOOKUP_PERCPU_ELEM         = 195,
+    BPF_FUNC_SKC_TO_MPTCP_SOCK              = 196,
+    BPF_FUNC_DYNPTR_FROM_MEM                = 197,
+    BPF_FUNC_RINGBUF_RESERVE_DYNPTR         = 198,
+    BPF_FUNC_RINGBUF_SUBMIT_DYNPTR          = 199,
+    BPF_FUNC_RINGBUF_DISCARD_DYNPTR         = 200,
+    BPF_FUNC_DYNPTR_READ                    = 201,
+    BPF_FUNC_DYNPTR_WRITE                   = 202,
+    BPF_FUNC_DYNPTR_DATA                    = 203,
+    BPF_FUNC_TCP_RAW_GEN_SYNCOOKIE_IPV4     = 204,
+    BPF_FUNC_TCP_RAW_GEN_SYNCOOKIE_IPV6     = 205,
+    BPF_FUNC_TCP_RAW_CHECK_SYNCOOKIE_IPV4   = 206,
+    BPF_FUNC_TCP_RAW_CHECK_SYNCOOKIE_IPV6   = 207,
+    BPF_FUNC_KTIME_GET_TAI_NS               = 208,
+    BPF_FUNC_USER_RINGBUF_DRAIN             = 209,
+    BPF_FUNC_CGRP_STORAGE_GET               = 210,
+    BPF_FUNC_CGRP_STORAGE_DELETE            = 211,
+}
+
+extern fn int libbpf_set_memlock_rlim(usz memlock_bytes);
+
+// TODO: verify layout
+struct BpfProgInfo
+{
+    uint type;
+    uint id;
+
+    char[8] tag;
+
+    uint jited_prog_len;
+    uint xlated_prog_len;
+
+    ulong jited_prog_insns;
+    ulong xlated_prog_insns;
+
+    ulong load_time;
+
+    uint created_by_uid;
+    uint nr_map_ids;
+
+    ulong map_ids;
+
+    char[16] name;
+
+    uint ifindex;
+
+    // bitfield section
+    uint gpl_compatible;
+
+    ulong netns_dev;
+    ulong netns_ino;
+
+    uint nr_jited_ksyms;
+    uint nr_jited_func_lens;
+
+    ulong jited_ksyms;
+    ulong jited_func_lens;
+
+    uint btf_id;
+    uint func_info_rec_size;
+
+    ulong func_info;
+
+    uint nr_func_info;
+    uint nr_line_info;
+
+    ulong line_info;
+    ulong jited_line_info;
+
+    uint nr_jited_line_info;
+    uint line_info_rec_size;
+
+    uint jited_line_info_rec_size;
+    uint nr_prog_tags;
+
+    ulong prog_tags;
+
+    ulong run_time_ns;
+    ulong run_cnt;
+    ulong recursion_misses;
+
+    uint verified_insns;
+
+    uint attach_btf_obj_id;
+    uint attach_btf_id;
+}
+
+struct BpfLogOpts
+{
+    usz sz_; // size of this struct
+    char* buf;
+    uint size;
+    uint level;
+    uint true_size;
+}
+
+struct BpfMapCreateOpts
+{
+    usz sz_;
+
+    uint btf_fd;
+    uint btf_key_type_id;
+    uint btf_value_type_id;
+    uint btf_vmlinux_value_type_id;
+
+    uint inner_map_fd;
+    uint map_flags;
+    ulong map_extra;
+
+    uint numa_node;
+    uint map_ifindex;
+    int value_type_btf_obj_fd;
+
+    uint token_fd;
+
+    void* excl_prog_hash;
+    uint excl_prog_hash_size;
+
+    BpfLogOpts* log_opts;
+}
+
+extern fn int bpf_map_create(
+    BpfMapType map_type,
+    ZString map_name,
+    uint key_size,
+    uint value_size,
+    uint max_entries,
+    BpfMapCreateOpts* opts
+);
+
+struct BpfProgLoadOpts
+{
+    usz sz_;
+    int attempts;
+
+    BpfAttachType expected_attach_type;
+    uint prog_btf_fd;
+    uint prog_flags;
+    uint prog_ifindex;
+    uint kern_version;
+
+    uint attach_btf_id;
+    uint attach_prog_fd;
+    uint attach_btf_obj_fd;
+
+    int* fd_array;
+
+    void* func_info;
+    uint func_info_cnt;
+    uint func_info_rec_size;
+
+    void* line_info;
+    uint line_info_cnt;
+    uint line_info_rec_size;
+
+    uint log_level;
+    uint log_size;
+    char* log_buf;
+    uint log_true_size;
+    uint token_fd;
+
+    uint fd_array_cnt;
+}
+
+extern fn int bpf_prog_load(
+    BpfProgType prog_type,
+    ZString prog_name,
+    ZString license,
+    BpfInsn* insns,
+    usz insn_cnt,
+    BpfProgLoadOpts* opts
+);
+
+enum BpfCgroupIterOrder
+{
+    UNSPEC,
+    SELF_ONLY,
+    DESCENDANTS_PRE,
+    DESCENDANTS_POST,
+    ANCESTORS_UP
+}
+
+union BpfIterLinkInfo
+{
+    struct map
+    {
+        uint map_fd;
+    }
+
+    struct cgroup
+    {
+        BpfCgroupIterOrder order;
+        uint cgroup_fd;
+        ulong cgroup_id;
+    }
+
+    struct task
+    {
+        uint tid;
+        uint pid;
+        uint pid_fd;
+    }
+}
+
+const MAPS_RELAX_COMPAT = 0x01;
+
+const BPF_LOG_BUF_SIZE = uint::max >> 8; /* verifier maximum in kernels <= 5.1 */
+
+struct BpfBtfLoadOpts
+{
+    usz sz_;
+    char* log_buf;
+    uint log_level;
+    uint log_size;
+    uint log_true_size;
+
+    uint btf_flags;
+    uint token_fd;
+}
+
+extern fn int bpf_btf_load(void* btf_data, usz btf_size, BpfBtfLoadOpts* opts);
+
+extern fn int bpf_map_update_elem(int fd, void* key, void* value, ulong flags);
+
+extern fn int bpf_map_lookup_elem(int fd, void* key, void* value);
+extern fn int bpf_map_lookup_elem_flags(int fd, void* key, void* value, ulong flags);
+extern fn int bpf_map_lookup_and_delete_elem(int fd, void* key, void* value);
+extern fn int bpf_map_lookup_and_delete_elem_flags(int fd, void* key, void* value, ulong flags);
+extern fn int bpf_map_delete_elem(int fd, void* key);
+extern fn int bpf_map_delete_elem_flags(int fd, void* key, ulong flags);
+extern fn int bpf_map_get_next_key(int fd, void* key, void* next_key);
+extern fn int bpf_map_freeze(int fd);
+
+struct BpfMapBatchOpts
+{
+    usz sz_;
+    ulong elem_flags;
+    ulong flags;
+}
+
+extern fn int bpf_map_delete_batch(int fd, void* keys, uint* count, BpfMapBatchOpts* opts);
+
+extern fn int bpf_map_lookup_batch(
+    int fd,
+    void* in_batch,
+    void* out_batch,
+    void* keys,
+    void* values,
+    uint* count,
+    BpfMapBatchOpts* opts
+);
+
+extern fn int bpf_map_lookup_and_delete_batch(
+    int fd,
+    void* in_batch,
+    void* out_batch,
+    void* keys,
+    void* values,
+    uint* count,
+    BpfMapBatchOpts* opts
+);
+
+extern fn int bpf_map_update_batch(
+    int fd,
+    void* keys,
+    void* values,
+    uint* count,
+    BpfMapBatchOpts* opts
+);
+
+struct BpfObjPinOpts
+{
+    usz sz_;
+    uint file_flags;
+    int path_fd;
+}
+
+extern fn int bpf_obj_pin(int fd, ZString pathname);
+extern fn int bpf_obj_pin_opts(int fd, ZString pathname, BpfObjPinOpts* opts);
+
+struct BpfObjGetOpts
+{
+    usz sz_;
+    uint file_flags;
+    int path_fd;
+}
+
+extern fn int bpf_obj_get(ZString pathname);
+extern fn int bpf_obj_get_opts(ZString pathname, BpfObjGetOpts* opts);
+
+extern fn int bpf_prog_attach(int prog_fd, int attachable_fd, BpfAttachType type, uint flags);
+extern fn int bpf_prog_detach(int attachable_fd, BpfObjGetOpts type);
+extern fn int bpf_prog_detach2(int prog_fd, int attachable_fd, BpfObjGetOpts type);
+
+struct BpfProgAttachOpts
+{
+    usz sz_;
+    uint flags;
+    union
+    {
+        int replace_prog_fd;
+        int replace_fd;
+    }
+    int relative_fd;
+    uint relative_id;
+    ulong expected_revision;
+}
+
+struct BpfProgDetachOpts
+{
+    usz sz_;
+    uint flags;
+    int relative_fd;
+    uint relative_id;
+    ulong expected_revision;
+}
+extern fn int bpf_prog_attach_opts(
+    int prog_fd,
+    int target,
+    BpfObjGetOpts type,
+    BpfProgAttachOpts* opts
+);
+
+extern fn int bpf_prog_detach_opts(
+    int prog_fd,
+    int target,
+    BpfObjGetOpts type,
+    BpfProgDetachOpts* opts
+);
+
+struct BpfLinkCreateOpts
+{
+    usz sz_;
+
+    uint flags;
+
+    BpfIterLinkInfo* iter_info;
+    uint iter_info_len;
+
+    uint target_btf_id;
+
+    union
+    {
+        struct perf_event
+        {
+            ulong bpf_cookie;
+        }
+
+        struct kprobe_multi
+        {
+            uint flags;
+            uint cnt;
+
+            ZString* syms;
+            ulong* addrs;
+            ulong* cookies;
+        }
+
+        struct uprobe_multi
+        {
+            uint flags;
+            uint cnt;
+
+            ZString path;
+
+            ulong* offsets;
+            ulong* ref_ctr_offsets;
+            ulong* cookies;
+
+            uint pid;
+        }
+
+        struct tracing
+        {
+            ulong cookie;
+        }
+
+        struct netfilter
+        {
+            uint pf;
+            uint hooknum;
+            int priority;
+            uint flags;
+        }
+
+        struct tcx
+        {
+            uint relative_fd;
+            uint relative_id;
+            ulong expected_revision;
+        }
+
+        struct netkit
+        {
+            uint relative_fd;
+            uint relative_id;
+            ulong expected_revision;
+        }
+
+        struct cgroup
+        {
+            uint relative_fd;
+            uint relative_id;
+            ulong expected_revision;
+        }
+    }
+}
+
+extern fn int bpf_link_create(
+    int prog_fd,
+    int target_fd,
+    BpfObjGetOpts attach_type,
+    BpfLinkCreateOpts* opts
+);
+
+extern fn int bpf_link_detach(int link_fd);
+
+struct BpfLinkUpdateOpts
+{
+    usz sz_;
+    uint flags;
+    uint old_prog_fd;
+    uint old_map_fd;
+}
+
+extern fn int bpf_link_update(int link_fd, int new_prog_fd, BpfLinkUpdateOpts* opts);
+
+extern fn int bpf_iter_create(int link_fd);
+
+struct BpfProgTestRunAttr
+{
+    int prog_fd;
+    int repeat;
+    void* data_in;
+    uint data_size_in;
+    void* data_out;
+    uint data_size_out;
+    uint retval;
+    uint duration;
+    void* ctx_in;
+    uint ctx_size_in;
+    void* ctx_out;
+    uint ctx_size_out;
+}
+
+extern fn int bpf_prog_get_next_id(uint start_id, uint* next_id);
+extern fn int bpf_map_get_next_id(uint start_id, uint* next_id);
+extern fn int bpf_btf_get_next_id(uint start_id, uint* next_id);
+extern fn int bpf_link_get_next_id(uint start_id, uint* next_id);
+
+struct BpfGetFdByIdOpts
+{
+    usz sz_;
+    uint open_flags;
+    uint token_fd;
+}
+
+// linux/bpf.h
+struct BpfMapInfo @align(8)
+{
+    uint type;
+    uint id;
+
+    uint key_size;
+    uint value_size;
+    uint max_entries;
+
+    uint map_flags;
+
+    char[16] name;
+
+    uint ifindex;
+    uint btf_vmlinux_value_type_id;
+
+    ulong netns_dev;
+    ulong netns_ino;
+
+    uint btf_id;
+    uint btf_key_type_id;
+    uint btf_value_type_id;
+    uint btf_vmlinux_id;
+
+    ulong map_extra;
+
+    ulong hash;
+    uint hash_size;
+}
+
+// linux/bpf.h
+struct BpfBtfInfo @align(8)
+{
+    ulong btf;
+    uint btf_size;
+
+    uint id;
+
+    ulong name;
+    uint name_len;
+
+    uint kernel_btf;
+}
+
+// linux/bpf.h
+struct BpfLinkInfo @align(8)
+{
+    uint type;
+    uint id;
+    uint prog_id;
+    union
+    {
+        struct raw_tracepoint
+        {
+            ulong tp_name;
+            uint tp_name_len;
+            ulong cookie;
+        }
+        struct tracing
+        {
+            uint attach_type;
+            uint target_obj_id;
+            uint target_btf_id;
+            ulong cookie;
+        }
+        struct cgroup
+        {
+            ulong cgroup_id;
+            uint attach_type;
+        }
+        struct iter
+        {
+            ulong target_name;
+            uint target_name_len;
+
+            union
+            {
+                struct map
+                {
+                    uint map_id;
+                }
+            }
+
+            union
+            {
+                struct cgroup
+                {
+                    ulong cgroup_id;
+                    uint order;
+                }
+                struct task
+                {
+                    uint tid;
+                    uint pid;
+                }
+            }
+        }
+        struct netns
+        {
+            uint netns_ino;
+            uint attach_type;
+        }
+        struct xdp
+        {
+            uint ifindex;
+        }
+        struct struct_ops
+        {
+            uint map_id;
+        }
+        struct netfilter
+        {
+            uint pf;
+            uint hooknum;
+            int priority;
+            uint flags;
+        }
+        struct kprobe_multi
+        {
+            ulong addrs;
+            uint count;
+            uint flags;
+            ulong missed;
+            ulong cookies;
+        }
+        struct uprobe_multi
+        {
+            ulong path;
+            ulong offsets;
+            ulong ref_ctr_offsets;
+            ulong cookies;
+            uint path_size;
+            uint count;
+            uint flags;
+            uint pid;
+        }
+        struct perf_event
+        {
+            uint type;
+
+            union
+            {
+                struct uprobe // BPF_PERF_EVENT_UPROBE, BPF_PERF_EVENT_URETPROBE
+                {
+                    ulong file_name;
+                    uint name_len;
+                    uint offset;
+                    ulong cookie;
+                    ulong ref_ctr_offset;
+                }
+                struct kprobe // BPF_PERF_EVENT_KPROBE, BPF_PERF_EVENT_KRETPROBE
+                {
+                    ulong func_name;
+                    uint name_len;
+                    uint offset;
+                    ulong addr;
+                    ulong missed;
+                    ulong cookie;
+                }
+                struct tracepoint // BPF_PERF_EVENT_TRACEPOINT
+                {
+                    ulong tp_name;
+                    uint name_len;
+                    ulong cookie;
+                }
+                struct event // BPF_PERF_EVENT_EVENT
+                {
+                    ulong config;
+                    uint type;
+                    ulong cookie;
+                }
+            }
+        }
+        struct tcx
+        {
+            uint ifindex;
+            uint attach_type;
+        }
+        struct netkit
+        {
+            uint ifindex;
+            uint attach_type;
+        }
+        struct sockmap
+        {
+            uint map_id;
+            uint attach_type;
+        }
+    }
+}
+
+extern fn int bpf_prog_get_fd_by_id(uint id);
+extern fn int bpf_prog_get_fd_by_id_opts(uint id, BpfGetFdByIdOpts* opts);
+extern fn int bpf_map_get_fd_by_id(uint id);
+extern fn int bpf_map_get_fd_by_id_opts(uint id, BpfGetFdByIdOpts* opts);
+extern fn int bpf_btf_get_fd_by_id(uint id);
+extern fn int bpf_btf_get_fd_by_id_opts(uint id, BpfGetFdByIdOpts* opts);
+extern fn int bpf_link_get_fd_by_id(uint id);
+extern fn int bpf_link_get_fd_by_id_opts(uint id, BpfGetFdByIdOpts* opts);
+extern fn int bpf_obj_get_info_by_fd(int bpf_fd, void* info, uint* info_len);
+
+extern fn int bpf_prog_get_info_by_fd(int prog_fd, BpfProgInfo* info, uint* info_len);
+
+extern fn int bpf_map_get_info_by_fd(int map_fd, BpfMapInfo* info, uint* info_len);
+
+extern fn int bpf_btf_get_info_by_fd(int btf_fd, BpfBtfInfo* info, uint* info_len);
+
+extern fn int bpf_link_get_info_by_fd(int link_fd, BpfLinkInfo* info, uint* info_len);
+
+struct BpfProgQueryOpts
+{
+    usz sz_;
+    uint query_flags;
+    uint attach_flags;
+    uint* prog_ids;
+    union
+    {
+        uint prog_cnt;
+        uint count;
+    }
+    uint* prog_attach_flags;
+    uint* link_ids;
+    uint* link_attach_flags;
+    ulong revision;
+}
+
+extern fn int bpf_prog_query_opts(int target, BpfObjGetOpts type, BpfProgQueryOpts* opts);
+extern fn int bpf_prog_query(
+    int target_fd,
+    BpfObjGetOpts type,
+    uint query_flags,
+    uint* attach_flags,
+    uint* prog_ids,
+    uint* prog_cnt
+);
+
+struct BpfRawTpOpts
+{
+    usz sz_;
+    ZString tp_name;
+    ulong cookie;
+}
+
+extern fn int bpf_raw_tracepoint_open_opts(int prog_fd, BpfRawTpOpts* opts);
+extern fn int bpf_raw_tracepoint_open(ZString name, int prog_fd);
+extern fn int bpf_task_fd_query(
+    int pid,
+    int fd,
+    uint flags,
+    char* buf,
+    uint* buf_len,
+    uint* prog_id,
+    uint* fd_type,
+    ulong* probe_offset,
+    ulong* probe_addr
+);
+
+extern fn int bpf_enable_stats(int type);
+
+struct BpfProgBindOpts
+{
+    usz sz_;
+    uint flags;
+}
+
+extern fn int bpf_prog_bind_map(int prog_fd, int map_fd, BpfProgBindOpts* opts);
+
+struct BpfTestRunOpts
+{
+    usz sz_;
+    void* data_in;
+    void* data_out;
+    uint data_size_in;
+    uint data_size_out;
+    void* ctx_in;
+    void* ctx_out;
+    uint ctx_size_in;
+    uint ctx_size_out;
+    uint retval;
+    int repeat;
+    uint duration;
+    uint flags;
+    uint cpu;
+    uint batch_size;
+}
+
+extern fn int bpf_prog_test_run_opts(int prog_fd, BpfTestRunOpts* opts);
+
+struct BpfTokenCreateOpts
+{
+    usz sz_;
+    uint flags;
+}
+
+extern fn int bpf_token_create(int bpffs_fd, BpfTokenCreateOpts* opts);
+
+struct BpfProgStreamReadOpts
+{
+    usz sz_;
+}
+
+extern fn int bpf_prog_stream_read(
+    int prog_fd,
+    uint stream_id,
+    void* buf,
+    uint buf_len,
+    BpfProgStreamReadOpts* opts
+);
+
+struct BpfProgAssocStructOpsOpts
+{
+    usz sz_;
+    uint flags;
+}
+
+extern fn int bpf_prog_assoc_struct_ops(int prog_fd, int map_fd, BpfProgAssocStructOpsOpts* opts);
