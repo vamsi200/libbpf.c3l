@@ -1,0 +1,10 @@
+{
+  "provides": "libbpf",
+  "targets": {
+    "linux-x64": {
+      "linked-libraries": [
+        "bpf"
+      ]
+    }
+  }
+}

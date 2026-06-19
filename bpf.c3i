@@ -1093,6 +1093,11 @@ extern fn int bpf_task_fd_query(
     ulong* probe_addr
 );
 
+//NOTE: using int here instead of an enum (bpf_stats_type)
+//enum bpf_stats_type {
+//	/* enabled run_time_ns and run_cnt */
+//	BPF_STATS_RUN_TIME = 0,
+//};
 extern fn int bpf_enable_stats(int type);
 
 struct BpfProgBindOpts
