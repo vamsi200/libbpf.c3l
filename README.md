@@ -1,12 +1,18 @@
 # libbpf.c3l
 
 C3 bindings for libbpf.
+>Note: 
+This package provides C3 bindings only.
+libbpf must be installed separately on the target system, these bindings will link against:
+```json
+"linked-libraries": [
+  "bpf"
+]
+```
 
 Source: https://github.com/libbpf/libbpf
 
-## Supported Version
-
-- libbpf v1.7.0
+Supported Version - libbpf v1.7.0 (latest)
 
 ## Installation
 
